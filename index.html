@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d19">
+  <title>INDcalcu — Kalkulator Ilmiah</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #080d19;
+  --text: #f2f5ff;
+  --muted: #76819b;
+  --cyan: #5de5ec;
+  --purple: #c98bff;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  overflow-x: hidden;
+  color: var(--text);
+  font-family: 'Manrope', sans-serif;
+  background: radial-gradient(ellipse at 17% 52%, rgba(117, 49, 138, .18), transparent 34%),
+              radial-gradient(ellipse at 83% 48%, rgba(0, 190, 209, .16), transparent 34%),
+              var(--bg);
+}
+
+body.intro-active { overflow: hidden; }
+
+.page-shell { opacity: 1; transform: translateY(0); transition: opacity .75s cubic-bezier(.22, 1, .36, 1), transform .75s cubic-bezier(.22, 1, .36, 1); }
+body.intro-active .page-shell { visibility: hidden; opacity: 0; transform: translateY(18px) scale(.985); pointer-events: none; }
+
+.lamp-intro {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 44%, #131820 0, #0b0e14 38%, #080a0f 78%);
+  opacity: 1;
+  transition: opacity .8s ease, visibility .8s ease;
+}
+.lamp-intro.is-on.is-leaving { opacity: 0; visibility: hidden; pointer-events: none; }
+.lamp-scene { position: relative; width: min(82vw, 380px); height: min(86vh, 530px); }
+.lamp-art { display: block; width: 100%; height: 100%; overflow: visible; }
+.lamp-floor-shadow { fill: #020306; opacity: .7; filter: blur(5px); }
+.lamp-light-pool { fill: #ffd66b; opacity: 0; filter: blur(11px); transition: opacity .35s ease; }
+.lamp-wire, .pull-cord { fill: none; stroke: #82878b; stroke-width: 2; stroke-linecap: round; }
+.lamp-wire { stroke: #3c434b; stroke-width: 3; }
+.lamp-shade { fill: url(#shade); stroke: #414951; stroke-width: 3; filter: drop-shadow(0 12px 14px #0008); }
+.lamp-rim { fill: none; stroke: #d5b665; stroke-width: 3; stroke-linecap: round; }
+.lamp-interior { fill: url(#innerShade); stroke: #687078; stroke-width: 1.4; }
+.lamp-bulb-glow { fill: url(#bulbGlow); opacity: 0; filter: url(#softGlow); transition: opacity .3s ease; }
+.lamp-bulb { fill: #687079; stroke: #8c9398; stroke-width: 1.5; transition: fill .3s ease, filter .3s ease; }
+.lamp-bulb-base { fill: none; stroke: #8f9699; stroke-width: 1.5; stroke-linecap: round; }
+.pull-cord { stroke: #e4c66e; stroke-width: 2.3; }
+.pull-knot { fill: #cfad55; stroke: #f0d783; stroke-width: 2; filter: drop-shadow(0 2px 3px #0009); }
+.pull-knot-detail { fill: #6d572d; }
+.lamp-pull { position: absolute; top: 54%; left: 44%; width: 34%; height: 31%; padding: 0; border: 0; border-radius: 24px; background: transparent; cursor: pointer; touch-action: manipulation; }
+.lamp-pull:focus-visible { outline: 2px solid #f1d275; outline-offset: 3px; }
+.lamp-instruction, .lamp-loading { position: absolute; top: 69%; left: 50%; margin: 0; padding: 9px 14px; transform: translate(-50%, 6px); border: 1px solid #333943; border-radius: 999px; color: #e9edf2; background: rgba(20, 24, 31, .92); box-shadow: 0 5px 16px #0006; font-size: 12px; font-weight: 700; white-space: nowrap; pointer-events: none; transition: opacity .35s ease, transform .35s ease; }
+.lamp-instruction { opacity: 1; }
+.lamp-loading { display: flex; align-items: center; gap: 10px; opacity: 0; }
+.loading-spinner { position: relative; display: block; width: 20px; height: 20px; flex: 0 0 20px; animation: loading-spin .9s linear infinite; }
+.loading-spinner i { position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: #f1d275; transform: rotate(var(--angle)) translateY(-8px); animation: loading-dot 1s ease-in-out infinite; animation-delay: var(--delay); }
+@keyframes loading-spin { to { transform: rotate(360deg); } }
+@keyframes loading-dot { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+.lamp-intro.is-on .lamp-instruction { opacity: 0; transform: translate(-50%, -4px); }
+.lamp-intro.is-on .lamp-loading { opacity: 1; transform: translate(-50%, 0); }
+.lamp-intro.is-on .lamp-bulb-glow { opacity: 1; }
+.lamp-intro.is-on .lamp-light-pool { opacity: .65; }
+.lamp-intro.is-on .lamp-bulb { fill: #fff0ae; filter: drop-shadow(0 0 12px #ffd85e); }
+.lamp-intro.is-on .pull-cord { transform: translateY(13px); transform-origin: 50% 45%; }
+.lamp-intro.is-on.is-leaving .lamp-scene { animation: lamp-fade-away .7s ease-in forwards; }
+.lamp-pull:disabled { cursor: default; }
+@keyframes lamp-fade-away { to { opacity: 0; transform: scale(.9) translateY(-10px); } }
+
+body::before, body::after {
+  position: fixed;
+  z-index: -1;
+  width: 280px;
+  height: 280px;
+  content: '';
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: .23;
+  pointer-events: none;
+}
+body::before { top: 8%; left: -130px; background: #bb54eb; }
+body::after { right: -110px; bottom: 8%; background: #00cddd; }
+
+button { font: inherit; }
+.page-shell { width: min(100%, 480px); }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 6px 22px;
+  color: #9ba6bd;
+}
+.brand { display: flex; align-items: center; gap: 9px; color: #f3f5ff; font-size: 15px; font-weight: 800; letter-spacing: .14em; text-decoration: none; }
+.brand-mark { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; }
+.brand-mark svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.logo-face { fill: #1768d1; stroke: #30343b; stroke-width: 4; }
+.logo-eye { fill: #fff; stroke: #30343b; stroke-width: 2.5; }
+.logo-pupil { fill: #30343b; transform-box: fill-box; transform-origin: center; will-change: transform; }
+.brand-dot, .calculator-heading h1 span { color: var(--cyan); }
+.topbar-label { font-size: 9px; font-weight: 800; letter-spacing: .18em; }
+.status { display: flex; align-items: center; gap: 7px; font-size: 8px; font-weight: 700; letter-spacing: .08em; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #5de6b0; box-shadow: 0 0 10px #5de6b0; }
+
+.calculator {
+  padding: 25px;
+  border: 1px solid rgba(207, 224, 255, .2);
+  border-radius: 29px;
+  background: linear-gradient(145deg, rgba(30, 37, 55, .91), rgba(13, 23, 37, .94));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .45), 0 0 45px rgba(71, 175, 202, .09), inset 0 1px 0 rgba(255, 255, 255, .09);
+  backdrop-filter: blur(20px);
+}
+.calculator-heading { display: flex; justify-content: space-between; align-items: center; margin: 0 1px 20px; }
+.eyebrow { margin: 0 0 5px; color: #8490a9; font-size: 9px; font-weight: 800; letter-spacing: .19em; }
+.calculator-heading h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.04em; }
+.angle-toggle { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border: 1px solid rgba(93, 229, 236, .3); border-radius: 12px; color: var(--cyan); background: rgba(54, 186, 198, .09); font-size: 10px; font-weight: 800; letter-spacing: .08em; cursor: pointer; transition: .2s; }
+.angle-toggle:hover { background: rgba(54, 186, 198, .18); }
+.angle-icon { font-size: 17px; line-height: 1; }
+.display { min-height: 128px; margin-bottom: 17px; padding: 16px 18px; overflow: hidden; border: 1px solid rgba(117, 227, 231, .15); border-radius: 18px; background: linear-gradient(120deg, rgba(7, 12, 22, .88), rgba(9, 29, 39, .78)); box-shadow: inset 0 3px 16px rgba(0, 0, 0, .27); text-align: right; }
+.display-meta { display: flex; align-items: center; justify-content: space-between; color: #697791; font-size: 8px; font-weight: 800; letter-spacing: .16em; }
+.memory-indicator { visibility: hidden; color: var(--cyan); }
+.expression { height: 38px; margin-top: 8px; overflow: hidden; color: #aeb9ce; font-family: 'DM Mono', monospace; font-size: 18px; line-height: 38px; text-overflow: ellipsis; white-space: nowrap; }
+.result-row { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+.result-equals { color: #60718a; font-size: 17px; }
+#result { max-width: 100%; overflow: hidden; color: #f5fbff; font-family: 'DM Mono', monospace; font-size: 30px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 0 22px rgba(93, 229, 236, .22); }
+.keypad { display: grid; gap: 12px; }
+.scientific-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.key { min-width: 0; height: 58px; border: 1px solid rgba(227, 235, 255, .13); border-radius: 15px; color: #f2f4fb; background: linear-gradient(145deg, rgba(111, 119, 135, .49), rgba(66, 75, 92, .55)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 5px 12px rgba(0,0,0,.12); font-size: 20px; font-weight: 600; cursor: pointer; user-select: none; transition: transform .12s ease, filter .15s ease, border-color .15s ease; -webkit-tap-highlight-color: transparent; }
+.key:hover { filter: brightness(1.2); border-color: rgba(255, 255, 255, .27); }
+.key:active { transform: scale(.94); }
+.key.scientific { height: 36px; border-radius: 10px; color: #9ae9ed; border-color: rgba(77, 204, 214, .17); background: rgba(57, 149, 163, .13); font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; }
+.key.scientific:hover { background: rgba(57, 205, 216, .22); }
+.main-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.key.utility, .key.operator { color: #76e4eb; border-color: rgba(85, 218, 224, .21); background: linear-gradient(145deg, rgba(44, 133, 147, .34), rgba(30, 86, 103, .4)); }
+.key.clear { color: #e99de5; border-color: rgba(216, 114, 203, .3); background: linear-gradient(145deg, rgba(160, 83, 156, .45), rgba(105, 57, 116, .47)); }
+.key.utility { font-size: 17px; }
+.key.operator { font-size: 24px; font-weight: 500; }
+.key.zero { grid-column: span 2; }
+.key.equals { color: #071522; border-color: rgba(95, 236, 255, .75); background: linear-gradient(145deg, #59e8ed, #14a9df); box-shadow: 0 0 24px rgba(0, 194, 234, .23), inset 0 1px 0 rgba(255,255,255,.4); font-size: 25px; }
+.key.equals:hover { filter: brightness(1.12); }
+.calculator-footer { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 16px; color: #64718a; font-size: 9px; }
+.calculator-footer span { color: #8393aa; font-size: 12px; }
+.ambient-note { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 19px; color: #626e84; font-size: 9px; letter-spacing: .04em; }
+.note-line { width: 25px; height: 1px; background: rgba(132, 151, 177, .25); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+@media (max-width: 420px) {
+  body { padding: 14px; }
+  .topbar { margin: 0 4px 16px; }
+  .topbar-label { display: none; }
+  .calculator { padding: 19px 16px; border-radius: 24px; }
+  .key { height: 55px; border-radius: 13px; }
+  .main-grid { gap: 8px; }
+  .scientific-grid { gap: 6px; }
+}
+@media (max-width: 340px) {
+  .key { height: 49px; font-size: 17px; }
+  .key.scientific { font-size: 10px; }
+  .calculator { padding: 16px 12px; }
+  #result { font-size: 26px; }
+}
+  </style>
+</head>
+<body class="intro-active">
+  <section class="lamp-intro" id="lampIntro" aria-label="Nyalakan kalkulator dengan menarik tali lampu">
+    <div class="lamp-scene">
+      <svg class="lamp-art" viewBox="0 0 300 420" role="img" aria-label="Lampu gantung dengan tali penarik">
+        <defs>
+          <linearGradient id="shade" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#48515a" />
+            <stop offset=".48" stop-color="#242b32" />
+            <stop offset="1" stop-color="#11151b" />
+          </linearGradient>
+          <linearGradient id="innerShade" x1="0" y1="0" x2="0" y2="1">
+            <stop stop-color="#303841" />
+            <stop offset="1" stop-color="#10141a" />
+          </linearGradient>
+          <radialGradient id="bulbGlow">
+            <stop stop-color="#fff6c8" stop-opacity=".95" />
+            <stop offset=".35" stop-color="#ffd86a" stop-opacity=".38" />
+            <stop offset="1" stop-color="#ffd86a" stop-opacity="0" />
+          </radialGradient>
+          <filter id="softGlow" x="-150%" y="-150%" width="400%" height="400%">
+            <feGaussianBlur stdDeviation="13" />
+          </filter>
+        </defs>
+        <ellipse class="lamp-floor-shadow" cx="151" cy="375" rx="79" ry="13" />
+        <ellipse class="lamp-light-pool" cx="151" cy="367" rx="72" ry="9" />
+        <path class="lamp-wire" d="M149 0v76" />
+        <path class="lamp-shade" d="M89 115c2-37 26-68 61-68s59 31 61 68l27 61c-30 19-146 19-176 0z" />
+        <path class="lamp-rim" d="M62 176c25 23 151 23 176 0" />
+        <ellipse class="lamp-interior" cx="150" cy="174" rx="87" ry="18" />
+        <ellipse class="lamp-bulb-glow" cx="150" cy="181" rx="51" ry="45" />
+        <path class="lamp-bulb" d="M139 177c0-10 5-17 11-17s11 7 11 17c0 7-3 10-6 13h-10c-3-3-6-6-6-13z" />
+        <path class="lamp-bulb-base" d="M144 191h12m-10 4h8" />
+        <path class="pull-cord" d="M151 183c13 49 25 112 42 160" />
+        <circle class="pull-knot" cx="193" cy="348" r="10" />
+        <path class="pull-knot-detail" d="M189 345h8l-4 10z" />
+      </svg>
+      <button class="lamp-pull" id="lampPull" type="button" aria-label="Tarik tali untuk menyalakan lampu dan membuka kalkulator"></button>
+      <p class="lamp-instruction">Tarik tali untuk menyalakan</p>
+      <div class="lamp-loading" id="lampLoading" role="status" aria-live="polite" aria-hidden="true">
+        <span class="loading-spinner" aria-hidden="true">
+          <i style="--angle: 0deg; --delay: 0s"></i>
+          <i style="--angle: 45deg; --delay: -.125s"></i>
+          <i style="--angle: 90deg; --delay: -.25s"></i>
+          <i style="--angle: 135deg; --delay: -.375s"></i>
+          <i style="--angle: 180deg; --delay: -.5s"></i>
+          <i style="--angle: 225deg; --delay: -.625s"></i>
+          <i style="--angle: 270deg; --delay: -.75s"></i>
+          <i style="--angle: 315deg; --delay: -.875s"></i>
+        </span>
+        <span>Menyiapkan kalkulator</span>
+      </div>
+    </div>
+  </section>
+  <main class="page-shell" aria-hidden="true">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="INDcalcu kalkulator">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="presentation">
+            <circle class="logo-face" cx="32" cy="32" r="29" />
+            <circle class="logo-eye" cx="25" cy="32" r="6" />
+            <circle class="logo-eye" cx="39" cy="32" r="6" />
+            <circle class="logo-pupil" cx="25" cy="32" r="2.5" />
+            <circle class="logo-pupil" cx="39" cy="32" r="2.5" />
+          </svg>
+        </span>
+        <span>INDcalcu</span>
+      </a>
+      <span class="topbar-label">SCIENTIFIC CALCULATOR</span>
+      <span class="status"><span class="status-dot"></span> SIAP DIGUNAKAN</span>
+    </header>
+
+    <section class="calculator" aria-label="Kalkulator ilmiah">
+      <div class="calculator-heading">
+        <div>
+          <p class="eyebrow">KALKULATOR ILMIAH</p>
+          <h1>Hitung apa saja<span>.</span></h1>
+        </div>
+        <button class="angle-toggle" id="angleToggle" type="button" aria-label="Ubah mode sudut">
+          <span class="angle-icon">∠</span><span id="angleMode">DEG</span>
+        </button>
+      </div>
+
+      <div class="display" aria-live="polite">
+        <div class="display-meta"><span>EKSPRESI</span><span class="memory-indicator" id="memoryIndicator">● MEM</span></div>
+        <div class="expression" id="expression">0</div>
+        <div class="result-row"><span class="result-equals">=</span><output id="result">0</output></div>
+      </div>
+
+      <div class="keypad">
+        <div class="scientific-grid" aria-label="Fungsi ilmiah">
+          <button class="key scientific" data-insert="^-1" aria-label="Kebalikan">x⁻¹</button>
+          <button class="key scientific" data-insert="nCr(" aria-label="Kombinasi n pilih r">nCr</button>
+          <button class="key scientific" data-insert="Pol(" aria-label="Konversi polar ke koordinat x">Pol</button>
+          <button class="key scientific" data-insert="^3" aria-label="Pangkat tiga">x³</button>
+          <button class="key scientific" data-insert="frac(" aria-label="Pecahan">a b/c</button>
+          <button class="key scientific" data-insert="sqrt(" aria-label="Akar kuadrat">√x</button>
+          <button class="key scientific" data-insert="^2" aria-label="Kuadrat">x²</button>
+          <button class="key scientific" data-insert="^" aria-label="Pangkat">xʸ</button>
+          <button class="key scientific" data-insert="log(" aria-label="Logaritma basis 10">log</button>
+          <button class="key scientific" data-insert="ln(" aria-label="Logaritma natural">ln</button>
+          <button class="key scientific" data-insert="abs(" aria-label="Nilai absolut">abs</button>
+          <button class="key scientific" data-insert="pi" aria-label="Pi">π</button>
+          <button class="key scientific" data-insert="-" aria-label="Tanda negatif">(−)</button>
+          <button class="key scientific" data-insert="dms(" aria-label="Konversi derajat menit detik">DMS</button>
+          <button class="key scientific" data-insert="hyp(" aria-label="Hipotenusa">hyp</button>
+          <button class="key scientific" data-insert="sin(" aria-label="Sinus">sin</button>
+          <button class="key scientific" data-insert="cos(" aria-label="Cosinus">cos</button>
+          <button class="key scientific" data-insert="tan(" aria-label="Tangen">tan</button>
+          <button class="key scientific" data-insert="asin(" aria-label="Invers sinus">sin⁻¹</button>
+          <button class="key scientific" data-insert="acos(" aria-label="Invers cosinus">cos⁻¹</button>
+          <button class="key scientific" data-insert="atan(" aria-label="Invers tangen">tan⁻¹</button>
+          <button class="key scientific" data-action="recall" aria-label="Memanggil memori">RCL</button>
+          <button class="key scientific" data-action="eng" aria-label="Notasi teknik">ENG</button>
+          <button class="key scientific" data-action="memory-add" aria-label="Tambah ke memori">M+</button>
+          <button class="key scientific" data-insert="(" aria-label="Kurung buka">(</button>
+          <button class="key scientific" data-insert=")" aria-label="Kurung tutup">)</button>
+          <button class="key scientific" data-insert="," aria-label="Pemisah argumen">,</button>
+          <button class="key scientific" data-action="answer" aria-label="Jawaban terakhir">Ans</button>
+          <button class="key scientific" data-insert="e" aria-label="Eksponen sepuluh">EXP</button>
+          <button class="key scientific" data-insert="!" aria-label="Faktorial">n!</button>
+        </div>
+
+        <div class="main-grid">
+          <button class="key utility clear" data-action="clear">AC</button>
+          <button class="key utility" data-action="delete">DEL</button>
+          <button class="key utility" data-insert="%">%</button>
+          <button class="key operator" data-insert="/">÷</button>
+
+          <button class="key number" data-insert="7">7</button>
+          <button class="key number" data-insert="8">8</button>
+          <button class="key number" data-insert="9">9</button>
+          <button class="key operator" data-insert="*">×</button>
+
+          <button class="key number" data-insert="4">4</button>
+          <button class="key number" data-insert="5">5</button>
+          <button class="key number" data-insert="6">6</button>
+          <button class="key operator" data-insert="-">−</button>
+
+          <button class="key number" data-insert="1">1</button>
+          <button class="key number" data-insert="2">2</button>
+          <button class="key number" data-insert="3">3</button>
+          <button class="key operator" data-insert="+">+</button>
+
+          <button class="key number zero" data-insert="0">0</button>
+          <button class="key number" data-insert=".">.</button>
+          <button class="key equals" data-action="equals">=</button>
+        </div>
+      </div>
+      <footer class="calculator-footer"><span>⌨</span> Bisa juga menggunakan keyboard</footer>
+    </section>
+    <div class="ambient-note"><span class="note-line"></span> Presisi untuk setiap perhitungan <span class="note-line"></span></div>
+  </main>
+  <script>
+const expressionDisplay = document.getElementById('expression');
+const resultDisplay = document.getElementById('result');
+const angleToggle = document.getElementById('angleToggle');
+const angleModeLabel = document.getElementById('angleMode');
+const memoryIndicator = document.getElementById('memoryIndicator');
+const logoMark = document.querySelector('.brand-mark');
+const logoPupils = document.querySelectorAll('.logo-pupil');
+const lampIntro = document.getElementById('lampIntro');
+const lampPull = document.getElementById('lampPull');
+const lampLoading = document.getElementById('lampLoading');
+const pageShell = document.querySelector('.page-shell');
+
+let expression = '';
+let angleMode = 'DEG';
+let justEvaluated = false;
+let memoryValue = null;
+let lastAnswer = 0;
+
+function formatResult(value) {
+  if (!Number.isFinite(value)) throw new Error('Hasil tidak valid');
+  if (Object.is(value, -0)) value = 0;
+  const rounded = Number(value.toPrecision(11));
+  return String(rounded);
+}
+
+function calculate(source) {
+  const tokens = source.match(/(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?|(?:[a-zA-Z]+)|[()+\-*/^%!,]/g) || [];
+  if (tokens.join('') !== source.replace(/\s+/g, '')) throw new Error('Ekspresi tidak valid');
+  let position = 0;
+  const peek = () => tokens[position];
+  const take = () => tokens[position++];
+
+  function parseExpression() {
+    let value = parseTerm();
+    while (peek() === '+' || peek() === '-') {
+      const operator = take();
+      const right = parseTerm();
+      value = operator === '+' ? value + right : value - right;
+    }
+    return value;
+  }
+
+  function parseTerm() {
+    let value = parseUnary();
+    while (peek() === '*' || peek() === '/') {
+      const operator = take();
+      const right = parseUnary();
+      value = operator === '*' ? value * right : value / right;
+    }
+    return value;
+  }
+
+  function parseUnary() {
+    if (peek() === '+') { take(); return parseUnary(); }
+    if (peek() === '-') { take(); return -parseUnary(); }
+    return parsePower();
+  }
+
+  function parsePower() {
+    let value = parsePostfix();
+    if (peek() === '^') {
+      take();
+      value = Math.pow(value, parseUnary());
+    }
+    return value;
+  }
+
+  function parsePostfix() {
+    let value = parsePrimary();
+    while (peek() === '!' || peek() === '%') {
+      const operator = take();
+      if (operator === '%') value /= 100;
+      else {
+        if (value < 0 || !Number.isInteger(value) || value > 170) throw new Error('Faktorial hanya untuk bilangan bulat 0–170');
+        let factorial = 1;
+        for (let n = 2; n <= value; n++) factorial *= n;
+        value = factorial;
+      }
+    }
+    return value;
+  }
+
+  function parsePrimary() {
+    const token = take();
+    if (token === undefined) throw new Error('Ekspresi belum lengkap');
+    if (token === '(') {
+      const value = parseExpression();
+      if (take() !== ')') throw new Error('Kurung belum lengkap');
+      return value;
+    }
+    if (/^(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?$/.test(token)) return Number(token);
+    if (/^[a-zA-Z]+$/.test(token)) {
+      if (token === 'pi') return Math.PI;
+      if (token === 'e') return Math.E;
+      if (take() !== '(') throw new Error('Fungsi perlu tanda kurung');
+      const first = parseExpression();
+      let second;
+      if (peek() === ',') {
+        take();
+        second = parseExpression();
+      }
+      if (take() !== ')') throw new Error('Kurung belum lengkap');
+      const angle = angleMode === 'DEG' ? first * Math.PI / 180 : first;
+      const inverseAngle = (value) => angleMode === 'DEG' ? value * 180 / Math.PI : value;
+      switch (token) {
+        case 'sqrt': return Math.sqrt(first);
+        case 'sin': return Math.sin(angle);
+        case 'cos': return Math.cos(angle);
+        case 'tan': return Math.tan(angle);
+        case 'asin': return inverseAngle(Math.asin(first));
+        case 'acos': return inverseAngle(Math.acos(first));
+        case 'atan': return inverseAngle(Math.atan(first));
+        case 'ln': return Math.log(first);
+        case 'log': return Math.log10(first);
+        case 'abs': return Math.abs(first);
+        case 'dms': {
+          const sign = Math.sign(first) || 1;
+          const absolute = Math.abs(first);
+          const degrees = Math.floor(absolute);
+          const minutes = Math.floor((absolute - degrees) * 60);
+          const seconds = ((absolute - degrees) * 60 - minutes) * 60;
+          return sign * (degrees + minutes / 100 + seconds / 10000);
+        }
+        case 'frac':
+          if (second === undefined) throw new Error('Pecahan perlu pembilang dan penyebut');
+          return first / second;
+        case 'hyp':
+          if (second === undefined) throw new Error('hyp perlu dua nilai');
+          return Math.hypot(first, second);
+        case 'Pol':
+          if (second === undefined) throw new Error('Pol perlu jarak dan sudut');
+          return first * Math.cos(angleMode === 'DEG' ? second * Math.PI / 180 : second);
+        case 'nCr': {
+          if (second === undefined || !Number.isInteger(first) || !Number.isInteger(second) || first < 0 || second < 0 || second > first) throw new Error('nCr memerlukan bilangan bulat n ≥ r ≥ 0');
+          let combination = 1;
+          for (let index = 1; index <= Math.min(second, first - second); index++) combination = combination * (first - index + 1) / index;
+          return combination;
+        }
+        default: throw new Error('Fungsi tidak dikenal');
+      }
+    }
+    throw new Error('Ekspresi tidak valid');
+  }
+
+  const value = parseExpression();
+  if (position !== tokens.length) throw new Error('Ekspresi tidak valid');
+  return value;
+}
+
+function refresh() {
+  expressionDisplay.textContent = expression || '0';
+  memoryIndicator.style.visibility = memoryValue === null ? 'hidden' : 'visible';
+  if (!expression) {
+    resultDisplay.textContent = '0';
+    return;
+  }
+  try {
+    resultDisplay.textContent = formatResult(calculate(expression));
+  } catch (error) {
+    resultDisplay.textContent = error.message.includes('belum') ? '…' : '—';
+  }
+}
+
+function insert(value) {
+  if (justEvaluated && /[0-9.(a-zA-Z]/.test(value[0])) expression = '';
+  justEvaluated = false;
+  const operators = '+-*/^';
+  if (operators.includes(value) && operators.includes(expression.slice(-1))) {
+    expression = expression.slice(0, -1) + value;
+  } else {
+    expression += value;
+  }
+  refresh();
+}
+
+function evaluate() {
+  if (!expression) return;
+  try {
+    const numericAnswer = calculate(expression);
+    const answer = formatResult(numericAnswer);
+    expression = answer;
+    lastAnswer = numericAnswer;
+    resultDisplay.textContent = answer;
+    justEvaluated = true;
+  } catch (error) {
+    resultDisplay.textContent = error.message;
+  }
+  expressionDisplay.textContent = expression;
+}
+
+function handleAction(action) {
+  if (action === 'clear') {
+    expression = '';
+    justEvaluated = false;
+    refresh();
+  } else if (action === 'delete') {
+    if (justEvaluated) justEvaluated = false;
+    expression = expression.slice(0, -1);
+    refresh();
+  } else if (action === 'equals') {
+    evaluate();
+  } else if (action === 'answer') {
+    insert(String(lastAnswer));
+  } else if (action === 'recall') {
+    if (memoryValue !== null) insert(String(memoryValue));
+  } else if (action === 'memory-add') {
+    if (!expression) return;
+    try {
+      memoryValue = (memoryValue || 0) + calculate(expression);
+      refresh();
+    } catch (error) {
+      resultDisplay.textContent = error.message;
+    }
+  } else if (action === 'eng') {
+    if (!expression) return;
+    try {
+      const value = calculate(expression);
+      expression = value.toExponential(6).replace(/\.?([\d]*?)0+e/, (_, digits) => `${digits ? `.${digits}` : ''}e`);
+      justEvaluated = false;
+      refresh();
+    } catch (error) {
+      resultDisplay.textContent = error.message;
+    }
+  }
+}
+
+document.querySelectorAll('[data-insert]').forEach((button) => {
+  button.addEventListener('click', () => insert(button.dataset.insert));
+});
+document.querySelectorAll('[data-action]').forEach((button) => {
+  button.addEventListener('click', () => handleAction(button.dataset.action));
+});
+
+lampPull.addEventListener('click', () => {
+  if (lampIntro.classList.contains('is-on')) return;
+  lampPull.disabled = true;
+  lampIntro.classList.add('is-on');
+  lampLoading.setAttribute('aria-hidden', 'false');
+
+  window.setTimeout(() => {
+    lampIntro.classList.add('is-leaving');
+    document.body.classList.remove('intro-active');
+    pageShell.setAttribute('aria-hidden', 'false');
+    window.setTimeout(() => lampIntro.remove(), 850);
+  }, 2000);
+});
+
+angleToggle.addEventListener('click', () => {
+  angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
+  angleModeLabel.textContent = angleMode;
+  refresh();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (/^[0-9.+\-*/^()%!]$/.test(event.key)) insert(event.key);
+  else if (event.key === 'Enter' || event.key === '=') { event.preventDefault(); evaluate(); }
+  else if (event.key === 'Backspace') handleAction('delete');
+  else if (event.key === 'Escape') handleAction('clear');
+});
+
+let pupilX = 0;
+let pupilY = 0;
+let targetPupilX = 0;
+let targetPupilY = 0;
+let pupilFrame = null;
+
+function animatePupils() {
+  pupilX += (targetPupilX - pupilX) * 0.16;
+  pupilY += (targetPupilY - pupilY) * 0.16;
+  logoPupils.forEach((pupil) => {
+    pupil.style.transform = `translate(${pupilX}px, ${pupilY}px)`;
+  });
+
+  if (Math.abs(targetPupilX - pupilX) > 0.02 || Math.abs(targetPupilY - pupilY) > 0.02) {
+    pupilFrame = requestAnimationFrame(animatePupils);
+  } else {
+    pupilX = targetPupilX;
+    pupilY = targetPupilY;
+    pupilFrame = null;
+  }
+}
+
+function movePupilsToward(pointerX, pointerY) {
+  const bounds = logoMark.getBoundingClientRect();
+  const dx = pointerX - (bounds.left + bounds.width / 2);
+  const dy = pointerY - (bounds.top + bounds.height / 2);
+  const distance = Math.hypot(dx, dy) || 1;
+  const movement = Math.min(2.2, distance * 0.025);
+  targetPupilX = (dx / distance) * movement;
+  targetPupilY = (dy / distance) * movement;
+
+  if (pupilFrame === null) pupilFrame = requestAnimationFrame(animatePupils);
+}
+
+window.addEventListener('pointermove', (event) => movePupilsToward(event.clientX, event.clientY));
+window.addEventListener('pointerleave', () => movePupilsToward(
+  logoMark.getBoundingClientRect().left + logoMark.getBoundingClientRect().width / 2,
+  logoMark.getBoundingClientRect().top + logoMark.getBoundingClientRect().height / 2
+));
+
+refresh();
+  </script>
+</body>
+</html>
